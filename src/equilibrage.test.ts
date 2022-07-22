@@ -156,4 +156,83 @@ describe('Algorithme d\'équilibrage :', function () {
         expect(livraisonsEquilibrees[3].places).toEqual({a: 14, b: 15, c: 10})
     })
 
+    it("cas sur 6 semaines", function () {
+        const livraisons: Livraison[] = [{
+            date: 20220404,
+            lockers: 46,
+            places: {a: 20, b: 15, c: 11}
+        }, {
+            date: 20220411,
+            lockers: 29,
+            places: {a: 10, b: 10, c: 9}
+        }, {
+            date: 20220418,
+            lockers: 70,
+            places: {a: 30, b: 20, c: 20}
+        }, {
+            date: 20220425,
+            lockers: 20,
+            places: {a: 5, b: 10, c: 5}
+        },
+        {
+            date: 20220502,
+            lockers: 46,
+            places: {a: 20, b: 15, c: 11}
+        },
+        {
+            date: 20220509,
+            lockers: 20,
+            places: {a: 5, b: 10, c: 5}
+        }
+        ]
+
+        // WHEN
+        const livraisonsEquilibrees = equilibrageLivraisons(livraisons)
+
+        // THEN
+        expect(livraisonsEquilibrees).toHaveLength(livraisons.length)
+        expect(livraisonsEquilibrees[0]).toEqual(
+            {
+                date: 20220404,
+                lockers: 39,
+                places: {a: 16, b: 13, c: 10}
+            }
+        )
+        expect(livraisonsEquilibrees[1]).toEqual(
+            {
+                date: 20220411,
+                lockers: 39,
+                places: {a: 17, b: 12, c: 10}
+            }
+        )
+        expect(livraisonsEquilibrees[2]).toEqual(
+            {
+                date: 20220418,
+                lockers: 48,
+                places: {a: 18, b: 15, c: 15}
+            }
+        )
+        expect(livraisonsEquilibrees[3]).toEqual(
+            {
+                date: 20220425,
+                lockers: 39,
+                places: {a: 14, b: 15, c: 10}
+            }
+        )
+        expect(livraisonsEquilibrees[4]).toEqual(
+            {
+                date: 20220502,
+                lockers: 39,
+                places: {a: 16, b: 13, c: 10}
+            }
+        )
+        expect(livraisonsEquilibrees[5]).toEqual(
+            {
+                date: 20220509,
+                lockers: 27,
+                places: {a: 9, b: 12, c: 6}
+            }
+        )
+    })
+
 })
