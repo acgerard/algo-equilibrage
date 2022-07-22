@@ -11,11 +11,11 @@ Implémentation de l'algorithme d'équilibrage de casiers.
 L'algorithme implémenté :
 - calcule le nombre moyen de paniers (nb total paniers / nb semaines, tronqué à l'entier supérieur pour déplacer le moins de paniers possibles)
 - ordonne les livraisons par ordre chronologique (la plus ancienne d'abord)
-- parcourt les livraisons en partant de la dernière (la plus dans le futur)
+- parcourt les livraisons
   - si cette livraison a plus de casiers que la moyenne alors
-    - décale vers l'avant (futur), si le nb de casiers suivant est < moyenne
     - décale vers l'arrière (passé) si le nb de casiers précédent est < moyenne
-  - equilibre ensuite les paniers dans les points relais en calculant le décalage de répartition vers la livraison suivante
+    - décale vers l'avant (futur), si le nb de casiers suivant est < moyenne
+  - equilibre ensuite les paniers dans les points relais en calculant le décalage de répartition vers la livraison precedente
     - dans un premier temps au prorata de la répartition des paniers
     - puis ce qui reste, réparti un à un
 

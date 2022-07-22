@@ -39,58 +39,53 @@ export function equilibrageLivraisons(livraisons: Livraison[]): Livraison[] {
     const nbCasiersMoyen = Math.ceil(nbCasiersTotal / nbLivraisons)
 
     // parcours des livraisons en partant de la plus récente
-    for (let i = nbLivraisons - 1; i >= 0; i--) {
+    for (let i = 0; i < nbLivraisons; i++) {
         const livraison = livraisonsEquilibrees[i]
-        const livraisonSuivante = i === nbLivraisons - 1 ? null : livraisonsEquilibrees[i + 1]
+        const livraisonPrecedente = i === 0 ? null : livraisonsEquilibrees[i - 1]
 
         // si nb casiers de la livraison <= nb casiers moyen -> on ne décale rien du tout
         if (livraison.livraison.lockers > nbCasiersMoyen) {
-            const livraisonPrecedente = i === 0 ? null : livraisonsEquilibrees[i - 1]
+            const livraisonSuivante = i === nbLivraisons - 1 ? null : livraisonsEquilibrees[i + 1]
 
             let nbCasiers = livraison.livraison.lockers
 
             const nbCasiersSuivant = !!livraisonSuivante ? getNbCasiers(livraisonSuivante) : nbCasiersMoyen
             const nbCasiersPrecedent = !!livraisonPrecedente ? getNbCasiers(livraisonPrecedente) : nbCasiersMoyen
 
-            if (!!livraisonSuivante && nbCasiersSuivant < nbCasiersMoyen) {
-                // on met décale des casiers dans la livraison suivante
-                const decalage = Math.min(nbCasiersMoyen - nbCasiersSuivant, nbCasiers - nbCasiersMoyen)
-                livraison.decalageApres.nb = -decalage
-                livraisonSuivante.decalageAvant.nb = decalage
-                nbCasiers = livraison.livraison.lockers - decalage
-            }
-            // si il y a encore des casiers à décaler, et que la livraison suivante peut en receptionner
-            if (nbCasiers > nbCasiersMoyen &&
-                !!livraisonPrecedente &&
-                nbCasiersPrecedent < nbCasiersMoyen
-            ) {
+            if (!!livraisonPrecedente && nbCasiersPrecedent < nbCasiersMoyen ) {
                 // on décale sur la livraison précédente
                 const decalage = Math.min(nbCasiersMoyen - nbCasiersPrecedent, nbCasiers - nbCasiersMoyen)
                 livraison.decalageAvant.nb = -decalage
                 livraisonPrecedente.decalageApres.nb = decalage
+                nbCasiers -= decalage
             }
+
+            // si il y a encore des casiers à décaler et que la livraison suivante peut en receptionner
+            if (nbCasiers > nbCasiersMoyen && !!livraisonSuivante && nbCasiersSuivant < nbCasiersMoyen) {
+                // on décale des casiers dans la livraison suivante
+                const decalage = Math.min(nbCasiersMoyen - nbCasiersSuivant, nbCasiers - nbCasiersMoyen)
+                livraison.decalageApres.nb = -decalage
+                livraisonSuivante.decalageAvant.nb = decalage
+            }
+
         }
 
-        // calcule de la répartition du décalage sur la livraison suivante
-        if (!!livraisonSuivante) {
+        // calcule de la répartition du décalage sur la livraison precedente
+        if (!!livraisonPrecedente) {
 
-            if(livraison.decalageApres.nb < 0) {
-                // decalage de cette livraison vers le futur
-                const repartitionDecalageSuivant = equilibragePtRelais(livraison.livraison.lockers, livraison.livraison.places, livraison.decalageApres.nb)
-                livraison.decalageApres.repartitionPtRelais = repartitionDecalageSuivant
+            if(livraison.decalageAvant.nb < 0) {
+                // decalage de cette livraison vers le passé
+                const repartitionDecalagePrecedent = equilibragePtRelais(livraison.livraison.lockers, livraison.livraison.places, livraison.decalageAvant.nb)
+                livraison.decalageAvant.repartitionPtRelais = repartitionDecalagePrecedent
                 // on inverse le signe de la repartition
-                const repartition = {} as RepartitionPointRelais
-                Object.keys(repartitionDecalageSuivant).forEach(id => repartition[id] = -repartitionDecalageSuivant[id])
-                livraisonSuivante.decalageAvant.repartitionPtRelais = repartition
+                livraisonPrecedente.decalageApres.repartitionPtRelais = repartitionOpposee(repartitionDecalagePrecedent)
             } else {
-                // decalage de la livraison d'après vers la courante
-                // on calcule en fait la repartition précedente de la livraison suivante
-                const repartitionDecalageSuivant = equilibragePtRelais(livraisonSuivante.livraison.lockers, livraisonSuivante.livraison.places, livraisonSuivante.decalageAvant.nb)
-                livraisonSuivante.decalageAvant.repartitionPtRelais = repartitionDecalageSuivant
+                // decalage de la livraison d'avant vers la courante
+                // on calcule en fait la repartition vers le futur de la livraison précédente
+                const repartitionDecalagePrecedent = equilibragePtRelais(livraisonPrecedente.livraison.lockers, livraisonPrecedente.livraison.places, livraisonPrecedente.decalageApres.nb)
+                livraisonPrecedente.decalageApres.repartitionPtRelais = repartitionDecalagePrecedent
                 // on inverse le signe de la repartition
-                const repartition = {} as RepartitionPointRelais
-                Object.keys(repartitionDecalageSuivant).forEach(id => repartition[id] = -repartitionDecalageSuivant[id])
-                livraison.decalageApres.repartitionPtRelais = repartition
+                livraison.decalageAvant.repartitionPtRelais = repartitionOpposee(repartitionDecalagePrecedent)
             }
 
         }
@@ -115,6 +110,12 @@ function getRepartition(livraison: LivraisonEquilibree): RepartitionPointRelais 
         repartition[id] += (livraison.decalageAvant.repartitionPtRelais[id] || 0) + (livraison.decalageApres.repartitionPtRelais[id] || 0)
     })
     return repartition
+}
+
+function repartitionOpposee(repartition: RepartitionPointRelais): RepartitionPointRelais {
+    const repartitionOpposee = {} as RepartitionPointRelais
+    Object.keys(repartition).forEach(id => repartitionOpposee[id] = -repartition[id])
+    return repartitionOpposee
 }
 
 function equilibragePtRelais(nbCasiersInitial: number, repartitionInitiale: RepartitionPointRelais, decalage: number): RepartitionPointRelais {
